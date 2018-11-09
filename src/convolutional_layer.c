@@ -50,7 +50,34 @@ matrix im2col(image im, int size, int stride)
 
     // TODO: 5.1 - fill in the column matrix
 
-    return col;
+    int start = (size - 1) / 2;
+    for(int channel = 0; channel < im.c; channel++) {
+        float* chanData = &im.data[channel * im.w * im.h];
+        float* colChanData = &col.data[channel * size * size * cols];
+        for(int rowSteps = 0; rowSteps < im.h; rowSteps += stride) {
+            for(int colSteps = 0; colSteps < im.w; colSteps += stride) {
+                for(int i = 0; i < size; i++) {
+                    for(int j = 0; j < size; j++) {
+
+                        int index = ((i * size + j) * cols + ((rowSteps / stride) * outw + (colSteps / stride)));
+
+                        int offset_i = i - start + rowSteps;
+                        int offset_j = j - start + colSteps; 
+                        int imageIndex = offset_i * im.w + offset_j;
+
+                        // printf("index: %d  imageIndex: %d i: %d j: %d rowSteps: %d colSteps: %d\n", index, imageIndex, i, j, rowSteps, colSteps);
+                        if (offset_i < 0 || offset_j < 0 || offset_i >= im.h || offset_j >= im.w) {
+                            colChanData[index] = 0;
+                        } else {
+                            colChanData[index] = chanData[imageIndex];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return col; 
 }
 
 // The reverse of im2col, add elements back into image
@@ -66,6 +93,32 @@ void col2im(matrix col, int size, int stride, image im)
     int cols = outw * outh;
 
     // TODO: 5.2 - add values into image im from the column matrix
+    int start = (size - 1) / 2;
+    for(int channel = 0; channel < im.c; channel++) {
+        float* chanData = &im.data[channel * im.w * im.h]; //get_channel(im, channel);
+        float* colChanData = &col.data[channel * size * size * cols];
+        for(int rowSteps = 0; rowSteps < im.h; rowSteps += stride) {
+            for(int colSteps = 0; colSteps < im.w; colSteps += stride) {
+                for(int i = 0; i < size; i++) {
+                    for(int j = 0; j < size; j++) {
+
+                        int index = ((i * size + j) * cols + ((rowSteps / stride) * outw + (colSteps / stride)));
+
+                        int offset_i = i - start + rowSteps;
+                        int offset_j = j - start + colSteps; 
+                        int imageIndex = offset_i * im.w + offset_j;
+
+                        // printf("index: %d  imageIndex: %d i: %d j: %d rowSteps: %d colSteps: %d\n", index, imageIndex, i, j, rowSteps, colSteps);
+                        if (offset_i < 0 || offset_j < 0 || offset_i >= im.h || offset_j >= im.w) {
+                            continue;
+                        } else {
+                            chanData[imageIndex] += colChanData[index];
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 }
 
@@ -151,6 +204,11 @@ void backward_convolutional_layer(layer l, matrix prev_delta)
 void update_convolutional_layer(layer l, float rate, float momentum, float decay)
 {
     // TODO: 5.3 Update the weights, similar to the connected layer.
+    axpy_matrix(-decay, l.w, l.dw);
+    axpy_matrix(rate, l.dw, l.w);
+    axpy_matrix(rate, l.db, l.b);
+
+    scal_matrix(momentum, l.dw);
 }
 
 // Make a new convolutional layer
@@ -181,4 +239,3 @@ layer make_convolutional_layer(int w, int h, int c, int filters, int size, int s
     l.update   = update_convolutional_layer;
     return l;
 }
-
