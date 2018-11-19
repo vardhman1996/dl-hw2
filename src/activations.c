@@ -7,7 +7,7 @@
 // matrix m: Input to activation function
 // ACTIVATION a: function to run
 void activate_matrix(matrix m, ACTIVATION a)
-{
+{   
     int i, j;
     for(i = 0; i < m.rows; ++i){
         double sum = 0;
@@ -47,7 +47,7 @@ void gradient_matrix(matrix m, ACTIVATION a, matrix d)
             double x = m.data[i*m.cols + j];
             // TODO: multiply the correct element of d by the gradient
             if (a == RELU) {
-                d.data[i * m.cols + j] *= 1;
+                d.data[i * m.cols + j] *= x > 0 ? 1 : 0;
             } else if (a == LRELU) {
                 d.data[i * m.cols + j] *= x < 0 ? 0.1 : 1;
             } else if (a == SOFTMAX) {

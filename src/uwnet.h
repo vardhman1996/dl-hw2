@@ -74,6 +74,12 @@ void backward_bias(matrix delta, matrix db);
 void activate_matrix(matrix m, ACTIVATION a);
 void gradient_matrix(matrix m, ACTIVATION a, matrix d);
 
+matrix mean(matrix x, int spatial);
+matrix variance(matrix x, matrix m, int spatial);
+matrix normalize(matrix x, matrix m, matrix v, int spatial);
+matrix delta_mean(matrix d, matrix variance, int spatial);
+matrix delta_variance(matrix d, matrix x, matrix mean, matrix variance, int spatial);
+matrix delta_batch_norm(matrix d, matrix dm, matrix dv, matrix mean, matrix variance, matrix x, int spatial);
 #ifdef __cplusplus
 }
 #endif

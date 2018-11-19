@@ -142,6 +142,10 @@ matrix forward_convolutional_layer(layer l, matrix in)
         free_matrix(x);
         free_matrix(wx);
     }
+    if(l.batchnorm){
+        matrix xnorm = batch_normalize_forward(l, out);
+        out = xnorm;
+    }
     forward_convolutional_bias(out, l.b);
     activate_matrix(out, l.activation);
 
@@ -167,6 +171,16 @@ void backward_convolutional_layer(layer l, matrix prev_delta)
 
     gradient_matrix(out, l.activation, delta);
     backward_convolutional_bias(delta, l.db);
+
+    // printf("%s\n", "hi?");
+    // printf("delta backwards cols: %d rows: %d", delta.cols, delta.rows);
+    // apply batch norm
+    if(l.batchnorm){
+        matrix dx = batch_normalize_backward(l, delta);
+        free_matrix(delta);
+        l.delta[0] = delta = dx;
+    }
+
     int i;
     matrix wt = transpose_matrix(l.w);
     for(i = 0; i < in.rows; ++i){
@@ -209,6 +223,7 @@ void update_convolutional_layer(layer l, float rate, float momentum, float decay
     axpy_matrix(rate, l.db, l.b);
 
     scal_matrix(momentum, l.dw);
+    scal_matrix(momentum, l.db);
 }
 
 // Make a new convolutional layer
@@ -237,5 +252,9 @@ layer make_convolutional_layer(int w, int h, int c, int filters, int size, int s
     l.forward  = forward_convolutional_layer;
     l.backward = backward_convolutional_layer;
     l.update   = update_convolutional_layer;
+
+    l.x = calloc(1, sizeof(matrix));
+    l.rolling_mean = make_matrix(1, filters);
+    l.rolling_variance = make_matrix(1, filters);
     return l;
 }

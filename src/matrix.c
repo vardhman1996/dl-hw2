@@ -55,7 +55,7 @@ matrix copy_matrix(matrix m)
     int i, j;
     for(i = 0; i < m.rows; i++) {
         for(j = 0; j < m.cols; j++) {
-            m.data[i * m.cols + j] = c.data[i * m.cols + j];
+            c.data[i * m.cols + j] = m.data[i * m.cols + j];
         }
     }
 
